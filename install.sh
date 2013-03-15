@@ -1,7 +1,13 @@
 #!/bin/bash
 
+####################
+# CKAN installation script
+# based on http://docs.ckan.org/en/master/install-from-source.html
+####################
+
 # @TODO Get these values as flags 
 dbpassword='abcde12345'
+readonlydbpassword='12345abcde'
 
 ####################
 # install packages
@@ -52,9 +58,9 @@ sed -i s/"sqlalchemy.url = postgresql://ckanuser:pass@localhost/ckandb"/"sqlalch
 ####################
 # Jetty Config     #
 ####################
-sed -i "s/#\?NO_START=.*/NO_START=0/"
-sed -i "s/#\?JETTY_HOST=.*/JETTY_HOST=$jettyhost/"
-sed -i "s/#\?JETTY_PORT=.*/JETTY_PORT=$jettyport/"
+sed -i "s/#\?NO_START=.*/NO_START=0/" /etc/default/jetty
+sed -i "s/#\?JETTY_HOST=.*/JETTY_HOST=$jettyhost/" /etc/default/jetty
+sed -i "s/#\?JETTY_PORT=.*/JETTY_PORT=$jettyport/" /etc/default/jetty
 
 sudo service jetty start
 curl -N -s http://$jettyhost:$jettyport/solr/ | grep -i "Welcome to Solr!"
@@ -70,12 +76,56 @@ fi
 # sudo service jetty stop
 # sudo service jetty start
 
-# replace (link) solr config!
+# replace (link) solr config
 sudo mv /etc/solr/conf/schema.xml /etc/solr/conf/schema.xml.bak
 sudo ln -s ~/pyenv/src/ckan/ckan/config/solr/schema-2.0.xml /etc/solr/conf/schema.xml
 
 sudo service jetty stop
 sudo service jetty start
 
+# config CKAN with solr settings
+sed -i s/'ckan.site_id =. *'/"ckan.site_id=my_ckan_instance"/ # @TODO wtf is this?
+sed -i s/'solr_url = .*'/"solr_url=http://$jettyhost:$jettyport/solr"/
+
+
+####################
+# DB tables
+####################
+
+paster --plugin=ckan db init
+
+
+####################
+# Datastore
+####################
+
+# @TODO tack on to ckan.plugins, not simply replace
+# sed -i s/'ckan.plugins = .*'/"datastore"/ development.ini
+
+# Create read-only db user
+sudo -u postgres createuser -S -D -R -P -l readonlyckanuser
+# @TODO automate password prompt response
+# expect "Enter password for new role:"
+# send "$readonlydbpassword"
+
+# Create datastore db
+sudo -u postgres createdb -O ckanuser datastore -E utf-8
+
+# Uncomment and update datastore config lines
+sed -i s/'#\?ckan.datastore.write_url = .*'/"ckan.datastore.write_url = postgresql://ckanuser:$dbpassword/datastore"/ development.ini
+sed -i s/'#\?ckan.datastore.read_url = .*'/"ckan.datastore.read_url = postgresql://readonlyckanuser:$readonlydbpassword/datastore"/ development.ini
+
+# copy datastore permissions
+paster datastore set-permissions postgres
+
+# Run tests
+#curl -X GET "http://127.0.0.1:5000/api/3/action/datastore_search?resource_id=_table_metadata"
+#curl -X POST http://127.0.0.1:5000/api/3/action/datastore_create -H "Authorization: {YOUR-API-KEY}" -d '{"resource_id": "{RESOURCE-ID}", "fields": [ {"id": "a"}, {"id": "b"} ], "records": [ { "a": 1, "b": "xyz"}, {"a": 2, "b": "zzz"} ]}'
+# Verify by browsing here: http://127.0.0.1:5000/api/3/action/datastore_search?resource_id={RESOURCE_ID}
+
+# create data store dirs
+mkdir data sstore
+
+# @TODO is the who.ini file in same directory as CKAN config?
 
 
