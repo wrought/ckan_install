@@ -8,6 +8,9 @@
 # @TODO Get these values as flags 
 dbpassword='abcde12345'
 readonlydbpassword='abcde12345'
+jettyhost='localhost'
+jettyport='8983'
+
 
 ####################
 # install packages
@@ -58,9 +61,9 @@ sed -i s/"sqlalchemy.url = postgresql://ckanuser:pass@localhost/ckandb"/"sqlalch
 ####################
 # Jetty Config     #
 ####################
-sed -i "s/#\?NO_START=.*/NO_START=0/" /etc/default/jetty
-sed -i "s/#\?JETTY_HOST=.*/JETTY_HOST=$jettyhost/" /etc/default/jetty
-sed -i "s/#\?JETTY_PORT=.*/JETTY_PORT=$jettyport/" /etc/default/jetty
+sed -i "s/^\(#\+\)\?\( \+\)\?NO_START=.*/NO_START=0/" /etc/default/jetty
+sed -i "s/^\(#\+\)\?\( \+\)\?JETTY_HOST=.*/JETTY_HOST=$jettyhost/" /etc/default/jetty
+sed -i "s/^\(#\+\)\?\( \+\)\?JETTY_PORT=.*/JETTY_PORT=$jettyport/" /etc/default/jetty
 
 sudo service jetty start
 curl -N -s http://$jettyhost:$jettyport/solr/ | grep -i "Welcome to Solr!"
@@ -84,8 +87,9 @@ sudo service jetty stop
 sudo service jetty start
 
 # config CKAN with solr settings
-sed -i s/'ckan.site_id =. *'/"ckan.site_id=my_ckan_instance"/ # @TODO wtf is this?
-sed -i s/'solr_url = .*'/"solr_url=http://$jettyhost:$jettyport/solr"/
+sed -i "s/ckan.site_id\( \)\?=\( \)\?.*/ckan.site_id = my_ckan_instance/"
+	# @TODO wtf is this?
+sed -i "s/solr_url\( \)\?=\( \)\?.*/solr_url = http:\/\/$jettyhost:$jettyport\/solr\//"
 
 
 ####################
