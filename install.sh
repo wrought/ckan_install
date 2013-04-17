@@ -56,14 +56,14 @@ sudo -u postgres createdb -O ckanuser ckandb -E utf-8
 cd ~/pyenv/src/ckan
 paster make-config ckan development.ini
 # edit development.ini
-sed -i s/"sqlalchemy.url = postgresql://ckanuser:pass@localhost/ckandb"/"sqlalchemy.url = postgresql://ckanuser:$dbpassword@localhost/ckantest"/ development.ini
+sed -i "s/\(#\+\)\?\( \+\)\?sqlalchemy\.url\( \+\)\?=\( \+\)\?.*/sqlalchemy.url = postgresql:\/\/ckanuser:$dbpassword@localhost\/ckantest\//" development.ini
 
 ####################
 # Jetty Config     #
 ####################
-sed -i "s/^\(#\+\)\?\( \+\)\?NO_START=.*/NO_START=0/" /etc/default/jetty
-sed -i "s/^\(#\+\)\?\( \+\)\?JETTY_HOST=.*/JETTY_HOST=$jettyhost/" /etc/default/jetty
-sed -i "s/^\(#\+\)\?\( \+\)\?JETTY_PORT=.*/JETTY_PORT=$jettyport/" /etc/default/jetty
+sed -i "s/\(#\+\)\?\( \+\)\?NO_START=.*/NO_START=0/" /etc/default/jetty
+sed -i "s/\(#\+\)\?\( \+\)\?JETTY_HOST=.*/JETTY_HOST=$jettyhost/" /etc/default/jetty
+sed -i "s/\(#\+\)\?\( \+\)\?JETTY_PORT=.*/JETTY_PORT=$jettyport/" /etc/default/jetty
 
 sudo service jetty start
 curl -N -s http://$jettyhost:$jettyport/solr/ | grep -i "Welcome to Solr!"
