@@ -5,7 +5,7 @@
 # based on http://docs.ckan.org/en/master/install-from-source.html
 ####################
 
-# @TODO Get these values as flags 
+# @TODO Get these values as flags
 dbpassword='abcde12345'
 readonlydbpassword='abcde12345'
 jettyhost='localhost'
@@ -15,7 +15,7 @@ jettyport='8983'
 ####################
 # install packages
 ####################
-apt-get install python-dev postgresql libpq-dev python-pip python-virtualenv git-core solr-jetty openjdk-6-jdk
+#apt-get install python-dev postgresql libpq-dev python-pip python-virtualenv git-core solr-jetty openjdk-6-jdk
 # @TODO include 'expect' package to automate responses in script
 
 ####################
