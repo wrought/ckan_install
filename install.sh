@@ -23,18 +23,18 @@ jettyport='8983'
 ####################
 
 # create a python virtual environment, activate it
-virtualenv --no-site-packages ~/pyenv
-. ~/pyenv/bin/activate
+virtualenv --no-site-packages /usr/local/data.openoakland/pyenv
+. /usr/local/data.openoakland/pyenv/bin/activate
 
 # install ckan source
 pip install -e 'git+https://github.com/okfn/ckan.git@release-v2.0#egg=ckan'
 
 # install python modules in virtual environment
-pip install -r ~/pyenv/src/ckan/pip-requirements.txt
+pip install -r /usr/local/data.openoakland/pyenv/src/ckan/pip-requirements.txt
 
 # de- and re-activate virtual environment
 deactivate
-. ~/pyenv/bin/activate
+. /usr/local/data.openoakland/pyenv/bin/activate
 
 ####################
 # postgresql database
@@ -52,10 +52,10 @@ sudo -u postgres createdb -O ckanuser ckandb -E utf-8
 ####################
 # CKAN config
 ####################
-cd ~/pyenv/src/ckan
-paster make-config ckan development.ini
-# edit development.ini
-sed -i "s/\(#\+\)\?\( \+\)\?sqlalchemy\.url\( \+\)\?=\( \+\)\?.*/sqlalchemy.url = postgresql:\/\/ckanuser:$dbpassword@localhost\/ckantest\//" development.ini
+cd /usr/local/data.openoakland/pyenv/src/ckan
+paster make-config ckan data.openoakland.ini
+# edit data.openoakland.ini
+sed -i "s/\(#\+\)\?\( \+\)\?sqlalchemy\.url\( \+\)\?=\( \+\)\?.*/sqlalchemy.url = postgresql:\/\/ckanuser:$dbpassword@localhost\/ckantest\//" data.openoakland.ini
 
 ####################
 # Jetty Config     #
@@ -76,15 +76,20 @@ Read the comments of this install script for more info.
     exit
 fi
 
-# If jetty can't find JDK, use correct path for "/usr/lib/..." such as below:
+## If jetty can't find JDK, use correct path for "/usr/lib/..." such as below:
 #
-# sed -i s/"#\?JAVA_HOME=.*"/"/usr/lib/jvm/java-6-openjdk-amd64/"/ /etc/default/jetty
+# sed -i "s/\(#\+\)\?\( \+\)\?JAVA_HOME=.*/JAVA_HOME=/usr/lib/jvm/java-6-openjdk-amd64/" /etc/default/jetty
+## or
+# sed -i "s/\(#\+\)\?\( \+\)\?JAVA_HOME=.*/JAVA_HOME=/usr/lib/jvm/java-6-openjdk-amd64/" /etc/default/jetty
+#
+## then restart jetty
+#
 # sudo service jetty stop
 # sudo service jetty start
 
 # replace (link) solr config
 sudo mv /etc/solr/conf/schema.xml /etc/solr/conf/schema.xml.bak
-sudo ln -s ~/pyenv/src/ckan/ckan/config/solr/schema-2.0.xml /etc/solr/conf/schema.xml
+sudo ln -s /usr/local/data.openoakland/pyenv/src/ckan/ckan/config/solr/schema-2.0.xml /etc/solr/conf/schema.xml
 
 sudo service jetty stop
 sudo service jetty start
@@ -107,20 +112,19 @@ paster --plugin=ckan db init
 ####################
 
 # @TODO tack on to ckan.plugins, not simply replace
-# sed -i s/'ckan.plugins = .*'/"datastore"/ development.ini
+# sed -i s/'ckan.plugins = .*'/"datastore"/ data.openoakland.ini
 
 # Create read-only db user
 sudo -u postgres createuser -S -D -R -P -l readonlyckanuser
-# @TODO automate password prompt response
-# expect "Enter password for new role:"
+# @TODO automate password prompt response # expect "Enter password for new role:"
 # send "$readonlydbpassword"
 
 # Create datastore db
 sudo -u postgres createdb -O ckanuser datastore -E utf-8
 
 # Uncomment and update datastore config lines
-sed -i s/'#\?ckan.datastore.write_url = .*'/"ckan.datastore.write_url = postgresql://ckanuser:$dbpassword/datastore"/ development.ini
-sed -i s/'#\?ckan.datastore.read_url = .*'/"ckan.datastore.read_url = postgresql://readonlyckanuser:$readonlydbpassword/datastore"/ development.ini
+sed -i s/'#\?ckan.datastore.write_url = .*'/"ckan.datastore.write_url = postgresql://ckanuser:$dbpassword/datastore"/ data.openoakland.ini
+sed -i s/'#\?ckan.datastore.read_url = .*'/"ckan.datastore.read_url = postgresql://readonlyckanuser:$readonlydbpassword/datastore"/ data.openoakland.ini
 
 # copy datastore permissions
 paster datastore set-permissions postgres
