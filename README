@@ -1,0 +1,4 @@
+Goal: Automate the install of CKAN 2.1a on Ubuntu 12.04 for Open Oakland.
+
+Status: Matt is trailblazing with install.sh and rch is chopping and clearing behind with the puppet manifest.
+

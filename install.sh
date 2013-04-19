@@ -5,7 +5,7 @@
 # based on http://docs.ckan.org/en/master/install-from-source.html
 ####################
 
-# @TODO Get these values as flags 
+# @TODO Get these values as flags
 dbpassword='abcde12345'
 readonlydbpassword='abcde12345'
 jettyhost='localhost'
@@ -15,7 +15,7 @@ jettyport='8983'
 ####################
 # install packages
 ####################
-apt-get install python-dev postgresql libpq-dev python-pip python-virtualenv git-core solr-jetty openjdk-6-jdk
+#apt-get install python-dev postgresql libpq-dev python-pip python-virtualenv git-core solr-jetty openjdk-6-jdk
 # @TODO include 'expect' package to automate responses in script
 
 ####################
@@ -56,14 +56,14 @@ sudo -u postgres createdb -O ckanuser ckandb -E utf-8
 cd ~/pyenv/src/ckan
 paster make-config ckan development.ini
 # edit development.ini
-sed -i "s/\(#\+\)\?\( \+\)\?sqlalchemy\.url\( \+\)\?=\( \+\)\?.*/sqlalchemy.url = postgresql:\/\/ckanuser:$dbpassword@localhost\/ckantest\//" development.ini
+sed -i s/"sqlalchemy.url = postgresql://ckanuser:pass@localhost/ckandb"/"sqlalchemy.url = postgresql://ckanuser:$dbpassword@localhost/ckantest"/ development.ini
 
 ####################
 # Jetty Config     #
 ####################
-sed -i "s/\(#\+\)\?\( \+\)\?NO_START=.*/NO_START=0/" /etc/default/jetty
-sed -i "s/\(#\+\)\?\( \+\)\?JETTY_HOST=.*/JETTY_HOST=$jettyhost/" /etc/default/jetty
-sed -i "s/\(#\+\)\?\( \+\)\?JETTY_PORT=.*/JETTY_PORT=$jettyport/" /etc/default/jetty
+sed -i "s/^\(#\+\)\?\( \+\)\?NO_START=.*/NO_START=0/" /etc/default/jetty
+sed -i "s/^\(#\+\)\?\( \+\)\?JETTY_HOST=.*/JETTY_HOST=$jettyhost/" /etc/default/jetty
+sed -i "s/^\(#\+\)\?\( \+\)\?JETTY_PORT=.*/JETTY_PORT=$jettyport/" /etc/default/jetty
 
 sudo service jetty start
 curl -N -s http://$jettyhost:$jettyport/solr/ | grep -i "Welcome to Solr!"
