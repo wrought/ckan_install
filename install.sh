@@ -41,11 +41,10 @@ deactivate
 ####################
 # sudo -u postgres psql -l # use to check if other dbs are utf8
 
+# create postgres password file for createuser
+echo "$dbpassword" > .pgpass
 # add ckanuser
-sudo -u postgres createuser -S -D -R -P ckanuser # will prompt for password
-# @TODO automate password prompt response
-# expect "Enter password for new role:"
-# send "$dbpassword"
+sudo -u postgres createuser -S -D -R -P ckanuser --no-password
 
 # create postgres db
 sudo -u postgres createdb -O ckanuser ckandb -E utf-8
@@ -56,20 +55,24 @@ sudo -u postgres createdb -O ckanuser ckandb -E utf-8
 cd ~/pyenv/src/ckan
 paster make-config ckan development.ini
 # edit development.ini
-sed -i s/"sqlalchemy.url = postgresql://ckanuser:pass@localhost/ckandb"/"sqlalchemy.url = postgresql://ckanuser:$dbpassword@localhost/ckantest"/ development.ini
+sed -i "s/\(#\+\)\?\( \+\)\?sqlalchemy\.url\( \+\)\?=\( \+\)\?.*/sqlalchemy.url = postgresql:\/\/ckanuser:$dbpassword@localhost\/ckantest\//" development.ini
 
 ####################
 # Jetty Config     #
 ####################
-sed -i "s/^\(#\+\)\?\( \+\)\?NO_START=.*/NO_START=0/" /etc/default/jetty
-sed -i "s/^\(#\+\)\?\( \+\)\?JETTY_HOST=.*/JETTY_HOST=$jettyhost/" /etc/default/jetty
-sed -i "s/^\(#\+\)\?\( \+\)\?JETTY_PORT=.*/JETTY_PORT=$jettyport/" /etc/default/jetty
+sed -i "s/\(#\+\)\?\( \+\)\?NO_START=.*/NO_START=0/" /etc/default/jetty
+sed -i "s/\(#\+\)\?\( \+\)\?JETTY_HOST=.*/JETTY_HOST=$jettyhost/" /etc/default/jetty
+sed -i "s/\(#\+\)\?\( \+\)\?JETTY_PORT=.*/JETTY_PORT=$jettyport/" /etc/default/jetty
 
 sudo service jetty start
-curl -N -s http://$jettyhost:$jettyport/solr/ | grep -i "Welcome to Solr!"
-if [ !$? ]
+curl -N -s http://$jettyhost:$jettyport/solr/ | grep -i "Welcome to Solr" && jettycheck=$?
+if [ ! $jettycheck ]
 then
-    echo "Jetty is not running on http://$jettyhost:$jettyport/solr/ please fix it and run this script again check if jetty knows where JDK is. Read the comments of this install script for more info"
+    echo "
+Jetty is not running and accessible at http://$jettyhost:$jettyport/solr/
+Please fix it and run this script again check if jetty knows where JDK is.
+Read the comments of this install script for more info.
+        "
     exit
 fi
 
@@ -87,9 +90,9 @@ sudo service jetty stop
 sudo service jetty start
 
 # config CKAN with solr settings
-sed -i "s/ckan.site_id\( \)\?=\( \)\?.*/ckan.site_id = my_ckan_instance/"
+sed -i "s/ckan.site_id\( \+\)\?=\( \+\)\?.*/ckan.site_id = my_ckan_instance/"
 	# @TODO wtf is this?
-sed -i "s/solr_url\( \)\?=\( \)\?.*/solr_url = http:\/\/$jettyhost:$jettyport\/solr\//"
+sed -i "s/solr_url\( \+\)\?=\( \+\)\?.*/solr_url = http:\/\/$jettyhost:$jettyport\/solr\//"
 
 
 ####################
