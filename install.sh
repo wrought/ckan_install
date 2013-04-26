@@ -87,6 +87,7 @@ fi
 # sudo service jetty stop
 # sudo service jetty start
 
+
 # replace (link) solr config
 sudo mv /etc/solr/conf/schema.xml /etc/solr/conf/schema.xml.bak
 sudo ln -s /usr/local/data.openoakland/pyenv/src/ckan/ckan/config/solr/schema-2.0.xml /etc/solr/conf/schema.xml
@@ -95,16 +96,19 @@ sudo service jetty stop
 sudo service jetty start
 
 # config CKAN with solr settings
-sed -i "s/ckan.site_id\( \+\)\?=\( \+\)\?.*/ckan.site_id = my_ckan_instance/"
-	# @TODO wtf is this?
-sed -i "s/solr_url\( \+\)\?=\( \+\)\?.*/solr_url = http:\/\/$jettyhost:$jettyport\/solr\//"
-
+sed -i "s/ckan.site_id\( \+\)\?=\( \+\)\?.*/ckan.site_id = my_ckan_instance/" data.openoakland.ini
+sed -i "s/solr_url\( \+\)\?=\( \+\)\?.*/solr_url = http:\/\/$jettyhost:$jettyport\/solr\//" data.openoakland.ini
 
 ####################
 # DB tables
 ####################
 
-paster --plugin=ckan db init
+# de- and re-activate virtual environment
+deactivate
+. /usr/local/data.openoakland/pyenv/bin/activate
+
+# Create db tables
+paster --plugin=ckan db init --config=data.openoakland.ini
 
 
 ####################
@@ -112,6 +116,8 @@ paster --plugin=ckan db init
 ####################
 
 # @TODO tack on to ckan.plugins, not simply replace
+
+grep -in 'ckan.plugins' | sed -e 's/:.*//g'
 # sed -i s/'ckan.plugins = .*'/"datastore"/ data.openoakland.ini
 
 # Create read-only db user
@@ -140,3 +146,14 @@ mkdir data sstore
 # @TODO is the who.ini file in same directory as CKAN config?
 
 
+####################
+# Create directories
+####################
+
+mkdir /usr/local/data.openoakland/pyenv/src/ckan/data /usr/local/data.openoakland/pyenvsrc/ckan/sstore
+
+# @TODO update config for store_file_path in who.ini
+
+# @TODO update config for cache_dir in CKAN config
+
+# @TODO ln -s /usr/local/data.openoakland/pyenv/src/ckan/who.ini
